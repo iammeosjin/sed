@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 
 export default function Dashboard() {
   const [data, setData] = useState<number[]>([]);
-  const chartRef = useRef<HTMLCanvasElement>(null);
   const [students, setStudents] = useState<
     {
       name: string;
@@ -33,38 +32,6 @@ export default function Dashboard() {
       status: statuses[Math.floor(Math.random() * statuses.length)],
     }));
     setStudents(randomStudents);
-
-    if (chartRef.current) {
-      const chartInstance = new Chart(chartRef.current, {
-        type: 'pie',
-        data: {
-          labels: ['CET', 'CA', 'CAS'],
-          datasets: [
-            {
-              data: randomData,
-              backgroundColor: ['#7C3AED', '#22C55E', '#EF4444'], // Colors
-              borderColor: '#2D2D2D',
-              borderWidth: 2,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: '#FFFFFF', // White text for dark background
-                font: { size: 14 },
-              },
-            },
-          },
-        },
-      });
-
-      // Cleanup chart on component unmount
-      return () => chartInstance.destroy();
-    }
   }, []);
 
   // Calculate percentages for the pie chart
@@ -152,7 +119,7 @@ export default function Dashboard() {
                     );
                     return acc;
                   },
-                  { startAngle: 0, elements: [] as JSX.Element[] },
+                  { startAngle: 0, elements: [] as any[] },
                 ).elements}
               </svg>
             </div>
