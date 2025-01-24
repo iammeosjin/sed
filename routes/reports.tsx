@@ -8,6 +8,7 @@ import { Student } from '../types.ts';
 export const handler: Handlers = {
   async GET(_, ctx) {
     const students = await StudentModel.list();
+
     return ctx.render({
       students,
     });

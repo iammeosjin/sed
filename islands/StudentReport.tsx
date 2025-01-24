@@ -9,7 +9,6 @@ import { Student } from '../types.ts';
 import { parseLevel } from '../library/parse-level.ts';
 
 type StudentReport = Omit<Student, 'sid'> & {
-  sid: number;
   status: 'Continuing' | 'Outgoing' | 'Freshmen';
 };
 
@@ -28,8 +27,10 @@ export default function ReportsPage(params: { students: Student[] }) {
     (acc, student) => {
       if (student.schoolYear > acc.year) {
         acc.year = student.schoolYear;
-      }
-      if (student.semester > acc.semester) {
+        acc.semester = student.semester;
+      } else if (
+        student.schoolYear === acc.year && student.semester > acc.semester
+      ) {
         acc.semester = student.semester;
       }
       return acc;
@@ -40,31 +41,33 @@ export default function ReportsPage(params: { students: Student[] }) {
     },
   );
 
-  const [students, setStudents] = useState<StudentReport[]>(
-    toPairs(
-      groupBy((student: Student) => student.sid, params.students),
-    ).reduce(
-      (acc: StudentReport[], [, students]: [string, Student[]]) => {
-        const student = students[students.length - 1];
-        const studentReport: StudentReport = {
-          ...student,
-          status: 'Freshmen',
-          sid: +student.sid,
-        };
-        if (
-          student.schoolYear < latestSchoolYear.year ||
-          student.semester < latestSchoolYear.semester
-        ) {
-          studentReport.status = 'Outgoing';
-        } else if (students.length > 1) {
-          studentReport.status = 'Continuing';
-        }
-        return [...acc, studentReport];
-      },
-      [],
+  const [students] = useState<StudentReport[]>(
+    sortBy(
+      ascend(prop('name')),
+      toPairs(
+        groupBy((student: Student) => student.slug, params.students),
+      ).reduce(
+        (acc: StudentReport[], [, students]: [string, Student[]]) => {
+          const student = students[students.length - 1];
+          const studentReport: StudentReport = {
+            ...student,
+            status: 'Freshmen',
+          };
+          if (
+            student.schoolYear < latestSchoolYear.year ||
+            student.semester < latestSchoolYear.semester
+          ) {
+            studentReport.status = 'Outgoing';
+          } else if (students.length > 1) {
+            studentReport.status = 'Continuing';
+          }
+          return [...acc, studentReport];
+        },
+        [],
+      ),
     ),
   );
-  const [summary, setSummary] = useState(calculateSummary(students));
+  const [summary] = useState(calculateSummary(students));
 
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 20;
@@ -92,11 +95,6 @@ export default function ReportsPage(params: { students: Student[] }) {
     <div class='bg-gray-900 min-h-screen text-gray-200 p-6'>
       <h1 class='text-3xl font-bold mb-6'>Enrollment Reports</h1>
 
-      {/* Upload Button */}
-      <div class='mb-6'>
-        <FileUpload uploadType='users' />
-      </div>
-
       {/* Summary Cards */}
       <div class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
         {[
@@ -115,40 +113,41 @@ export default function ReportsPage(params: { students: Student[] }) {
         ))}
       </div>
 
+      {/* Students Table Header with Upload Button */}
+      <div class='flex justify-between items-center mb-4'>
+        <h2 class='text-xl font-bold'>Enrolled Students</h2>
+        <FileUpload uploadType='students' />
+      </div>
+
       {/* Students Table */}
       <div class='bg-gray-800 p-6 rounded-lg shadow'>
-        <h2 class='text-xl font-bold mb-4'>Enrolled Students</h2>
         <table class='w-full text-left text-gray-200'>
           <thead class='bg-gray-700'>
             <tr>
               <th class='p-2'>Name</th>
-              <th class='p-2'>ID Number</th>
               <th class='p-2'>College</th>
               <th class='p-2'>Year Level</th>
               <th class='p-2'>Status</th>
             </tr>
           </thead>
           <tbody>
-            {sortBy(ascend(prop('name')), paginatedStudents).map((
-              student: StudentReport,
-              idx: number,
-            ) => (
-              <tr
-                key={idx}
-                class={`${
-                  idx % 2 === 0 ? 'bg-gray-600' : 'bg-gray-700'
-                } hover:bg-gray-500`}
-              >
-                <td class='p-2'>{student.name}</td>
-                <td class='p-2'>{student.sid}</td>
-                <td class='p-2'>{student.college}</td>
-                <td class='p-2'>
-                  {parseLevel(student.level)} Year {student.degree}
-                </td>
-
-                <td class='p-2'>{student.status}</td>
-              </tr>
-            ))}
+            {paginatedStudents.map(
+              (student: StudentReport, idx: number) => (
+                <tr
+                  key={idx}
+                  class={`${
+                    idx % 2 === 0 ? 'bg-gray-600' : 'bg-gray-700'
+                  } hover:bg-gray-500`}
+                >
+                  <td class='p-2'>{student.name}</td>
+                  <td class='p-2'>{student.college}</td>
+                  <td class='p-2'>
+                    {parseLevel(student.level)} Year {student.degree}
+                  </td>
+                  <td class='p-2'>{student.status}</td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
 

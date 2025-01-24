@@ -5,7 +5,8 @@ export type KVEntry = {
 
 export type Student = {
   id: ID; // schoolYear, semester, level, degree, college,  sid
-  sid: string;
+  sid?: string;
+  slug: string;
   email: string;
   name: string;
   schoolYear: number;

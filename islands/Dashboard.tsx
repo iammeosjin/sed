@@ -1,42 +1,92 @@
-import { useEffect, useState } from 'preact/hooks';
+// deno-lint-ignore-file no-explicit-any
+import { useState } from 'preact/hooks';
+import groupBy from 'https://deno.land/x/ramda@v0.27.2/source/groupBy.js';
+import toPairs from 'https://deno.land/x/ramda@v0.27.2/source/toPairs.js';
+import sort from 'https://deno.land/x/ramda@v0.27.2/source/sort.js';
+import { Student } from '../types.ts';
+import { parseLevel } from '../library/parse-level.ts';
 
-export default function Dashboard() {
-  const [data, setData] = useState<number[]>([]);
-  const [students, setStudents] = useState<
+type StudentReport = Omit<Student, 'sid'> & {
+  status: 'Continuing' | 'Outgoing' | 'Freshmen';
+};
+
+const calculateSummary = (studentList: StudentReport[]) => {
+  const total = studentList.length;
+  const freshmen = studentList.filter((s) => s.status === 'Freshmen').length;
+  const continuing =
+    studentList.filter((s) => s.status === 'Continuing').length;
+  const outgoing = studentList.filter((s) => s.status === 'Outgoing').length;
+
+  return {
+    'Total Students': total,
+    Freshmen: freshmen,
+    Continuing: continuing,
+    Outgoing: outgoing,
+  };
+};
+
+export default function Dashboard(params: { students: Student[] }) {
+  const latestSchoolYear = params.students.reduce(
+    (acc, student) => {
+      if (student.schoolYear > acc.year) {
+        acc.year = student.schoolYear;
+        acc.semester = student.semester;
+      } else if (
+        student.schoolYear === acc.year && student.semester > acc.semester
+      ) {
+        acc.semester = student.semester;
+      }
+      return acc;
+    },
     {
-      name: string;
-      college: string;
-      department: string;
-      id: string;
-      status: string;
-    }[]
-  >([]);
+      year: 1,
+      semester: 1,
+    },
+  );
+  const [students] = useState<StudentReport[]>(
+    toPairs(
+      groupBy((student: Student) => student.slug, params.students),
+    ).reduce(
+      (acc: StudentReport[], [, students]: [string, Student[]]) => {
+        const student = students[students.length - 1];
+        const studentReport: StudentReport = {
+          ...student,
+          status: 'Freshmen',
+        };
+        if (
+          student.schoolYear < latestSchoolYear.year ||
+          student.semester < latestSchoolYear.semester
+        ) {
+          studentReport.status = 'Outgoing';
+        } else if (students.length > 1) {
+          studentReport.status = 'Continuing';
+        }
+        return [...acc, studentReport];
+      },
+      [],
+    ),
+  );
 
-  useEffect(() => {
-    // Generate random data for charts
-    const randomData = Array.from(
-      { length: 3 },
-      () => Math.floor(Math.random() * 5000),
-    );
-    setData(randomData);
+  const collegeStats = students.reduce(
+    (acc: Record<string, number>, student) => {
+      acc[student.college] = (acc[student.college] || 0) + 1;
+      return acc;
+    },
+    {},
+  );
 
-    // Generate random students data
-    const colleges = ['CET', 'CA', 'CAS'];
-    const departments = ['BS IT', 'BS Agriculture', 'BS Social Work'];
-    const statuses = ['Freshmen', 'Continuing', 'Outgoing'];
-    const randomStudents = Array.from({ length: 10 }, (_, idx) => ({
-      name: `Student ${idx + 1}`,
-      college: colleges[Math.floor(Math.random() * colleges.length)],
-      department: departments[Math.floor(Math.random() * departments.length)],
-      id: `2023${Math.floor(1000 + Math.random() * 9000)}`,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-    }));
-    setStudents(randomStudents);
-  }, []);
+  const colleges = Object.keys(collegeStats);
 
-  // Calculate percentages for the pie chart
-  const total = data.reduce((sum, value) => sum + value, 0);
-  const percentages = data.map((value) => (value / total) * 100);
+  const summary = calculateSummary(students);
+
+  const paginatedStudents = sort(
+    (a: StudentReport, b: StudentReport) => b.level - a.level,
+    students,
+  ).slice(0, 10);
+
+  const percentages = Object.values(collegeStats).map((value) =>
+    (value / summary['Total Students']) * 100
+  );
 
   // Helper function to calculate SVG path for each slice
   const calculatePath = (percentage: number, startAngle: number) => {
@@ -67,7 +117,7 @@ export default function Dashboard() {
               >
                 <p>{item}</p>
                 <h2 class='text-2xl font-bold'>
-                  {idx === 0 ? data.reduce((a, b) => a + b, 0) : data[idx - 1]}
+                  {summary[item as keyof typeof summary]}
                 </h2>
               </div>
             ),
@@ -79,18 +129,21 @@ export default function Dashboard() {
           <div class='bg-gray-800 p-4 rounded shadow'>
             <h3 class='font-bold text-gray-200'>Enrollees per College</h3>
             <div class='mt-4'>
-              {['CET', 'CA', 'CAS'].map((college, idx) => (
+              {colleges.map((college, idx) => (
                 <div key={idx} class='flex items-center justify-between'>
                   <span>{college}</span>
                   <div class='bg-purple-600 h-4 rounded-full w-2/3 relative'>
                     <div
                       class='absolute top-0 left-0 h-full bg-purple-400'
                       style={{
-                        width: `${(data[idx] / 5000) * 100}%`,
+                        width: `${
+                          (collegeStats[college] / summary['Total Students']) *
+                          100
+                        }%`,
                       }}
                     />
                   </div>
-                  <span>{data[idx]}</span>
+                  <span>{collegeStats[college]}</span>
                 </div>
               ))}
             </div>
@@ -99,7 +152,8 @@ export default function Dashboard() {
           {/* Pie Chart */}
           <div class='bg-gray-800 p-6 rounded-lg shadow-lg max-w-screen-md mx-auto'>
             <h3 class='text-xl font-bold text-gray-100 mb-6'>
-              AY 2024-2025 Distribution
+              AY {new Date().getFullYear() - 1}-{new Date().getFullYear()}{' '}
+              Distribution
             </h3>
             <div class='flex justify-center items-center mb-8'>
               <svg viewBox='0 0 32 32' class='w-64 h-64'>
@@ -124,121 +178,52 @@ export default function Dashboard() {
               </svg>
             </div>
             <div class='flex justify-around'>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[0] }}
-                >
-                </span>
-                <span>CET</span>
-              </div>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[1] }}
-                >
-                </span>
-                <span>CA</span>
-              </div>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[2] }}
-                >
-                </span>
-                <span>CAS</span>
-              </div>
+              {colleges.map((college, index) => {
+                return (
+                  <div class='flex items-center space-x-2'>
+                    <span
+                      class='block w-4 h-4'
+                      style={{ backgroundColor: colors[index] }}
+                    >
+                    </span>
+                    <span>{college}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          {
-            /* <div class='bg-gray-800 p-4 rounded shadow'>
-            <h3 class='font-bold text-gray-200'>AY 2024-2025 Distribution</h3>
-            <div class='flex justify-center items-center mt-4'>
-              <svg viewBox='0 0 32 32' class='w-32 h-32'>
-                {data.map((value, idx) => {
-                  const percentage = value / total; // Calculate percentage
-                  const offset = data
-                    .slice(0, idx) // Sums up previous slices
-                    .reduce((sum, prevValue) => sum + prevValue / total, 0) *
-                    100;
-
-                  return (
-                    <circle
-                      key={idx}
-                      r='16'
-                      cx='16'
-                      cy='16'
-                      fill='transparent'
-                      stroke={colors[idx]}
-                      strokeWidth='32'
-                      strokeDasharray={`${percentage * 100} ${
-                        100 - percentage * 100
-                      }`}
-                      strokeDashoffset={-offset} // Adjust slice offset
-                      transform='rotate(-90 16 16)' // Start from top
-                    />
-                  );
-                })}
-              </svg>
-            </div>
-            <div class='mt-4 flex justify-around'>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[0] }}
-                >
-                </span>
-                <span>CET</span>
-              </div>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[1] }}
-                >
-                </span>
-                <span>CA</span>
-              </div>
-              <div class='flex items-center space-x-2'>
-                <span
-                  class='block w-4 h-4'
-                  style={{ backgroundColor: colors[2] }}
-                >
-                </span>
-                <span>CAS</span>
-              </div>
-            </div>
-          </div> */
-          }
         </section>
 
         {/* Students Table */}
         <section class='mt-8 bg-gray-800 p-4 rounded shadow'>
           <h3 class='font-bold text-gray-200 mb-4'>Recent Students</h3>
-          <table class='w-full text-gray-200'>
-            <thead>
-              <tr class='bg-gray-700'>
-                <th class='p-2 text-left'>Name</th>
-                <th class='p-2 text-left'>College</th>
-                <th class='p-2 text-left'>Department</th>
-                <th class='p-2 text-left'>ID</th>
-                <th class='p-2 text-left'>Status</th>
+          <table class='w-full text-left text-gray-200'>
+            <thead class='bg-gray-700'>
+              <tr>
+                <th class='p-2'>Name</th>
+                <th class='p-2'>College</th>
+                <th class='p-2'>Year Level</th>
+                <th class='p-2'>Status</th>
               </tr>
             </thead>
             <tbody>
-              {students.map((student, idx) => (
-                <tr
-                  key={idx}
-                  class={`${
-                    idx % 2 === 0 ? 'bg-gray-600' : 'bg-gray-700'
-                  } hover:bg-gray-500`}
-                >
-                  <td class='p-2'>{student.name}</td>
-                  <td class='p-2'>{student.college}</td>
-                  <td class='p-2'>{student.department}</td>
-                  <td class='p-2'>{student.id}</td>
-                  <td class='p-2'>{student.status}</td>
-                </tr>
-              ))}
+              {paginatedStudents.map(
+                (student: StudentReport, idx: number) => (
+                  <tr
+                    key={idx}
+                    class={`${
+                      idx % 2 === 0 ? 'bg-gray-600' : 'bg-gray-700'
+                    } hover:bg-gray-500`}
+                  >
+                    <td class='p-2'>{student.name}</td>
+                    <td class='p-2'>{student.college}</td>
+                    <td class='p-2'>
+                      {parseLevel(student.level)} Year {student.degree}
+                    </td>
+                    <td class='p-2'>{student.status}</td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </section>

@@ -15,7 +15,6 @@ export const handler: Handlers = {
         skipFirstRow: true, // Skip the header row
       },
     ) as {
-      'School ID': string;
       'Name': string;
       College: string;
       Level: string;
@@ -24,7 +23,16 @@ export const handler: Handlers = {
       Semester: string;
       Email: string;
     }[];
-    await Bluebird.map(users, async (user) => {
+
+    console.log('users', users.length);
+
+    const students = await Bluebird.map(users, async (user) => {
+      if (!user.Name) return;
+      const slug = user.Name.toLowerCase().replace(/\s/g, '-');
+      if (user.Name === 'ABES, ANDREA MARIE H.') {
+        console.log('id', user);
+      }
+
       await StudentModel.insert({
         id: [
           user.SchoolYear,
@@ -32,20 +40,30 @@ export const handler: Handlers = {
           user.Level,
           user.Degree,
           user.College,
-          user['School ID'],
+          slug,
         ], // schoolYear, semester, level, degree, college,  sid
-        sid: user['School ID'],
         email: user.Email,
         name: user.Name,
+        slug,
         schoolYear: parseInt(user.SchoolYear),
         level: parseInt(user.Level),
         degree: user.Degree,
         college: user.College,
         semester: parseInt(user.Semester),
       });
-    }, { concurrency: 10 });
-
-    console.log('done');
+      return {
+        email: user.Email,
+        name: user.Name,
+        slug,
+        schoolYear: parseInt(user.SchoolYear),
+        level: parseInt(user.Level),
+        degree: user.Degree,
+        college: user.College,
+        semester: parseInt(user.Semester),
+      };
+    }, { concurrency: 100 });
+    console.log(JSON.stringify(students.filter((s) => !!s)));
+    console.log('done', await StudentModel.list().then((res) => res.length));
 
     return new Response(null, {
       status: 200,
