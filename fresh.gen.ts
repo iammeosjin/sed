@@ -8,11 +8,12 @@ import * as $2 from './routes/api/prediction.ts';
 import * as $3 from './routes/api/upload.ts';
 import * as $4 from './routes/dashboard.tsx';
 import * as $5 from './routes/index.tsx';
-import * as $6 from './routes/prediciton.tsx';
+import * as $6 from './routes/prediction.tsx';
 import * as $7 from './routes/reports.tsx';
 import * as $$0 from './islands/Counter.tsx';
 import * as $$1 from './islands/Dashboard.tsx';
-import * as $$2 from './islands/StudentReport.tsx';
+import * as $$2 from './islands/PredictionPage.tsx';
+import * as $$3 from './islands/StudentReport.tsx';
 
 const manifest = {
 	routes: {
@@ -22,13 +23,14 @@ const manifest = {
 		'./routes/api/upload.ts': $3,
 		'./routes/dashboard.tsx': $4,
 		'./routes/index.tsx': $5,
-		'./routes/prediciton.tsx': $6,
+		'./routes/prediction.tsx': $6,
 		'./routes/reports.tsx': $7,
 	},
 	islands: {
 		'./islands/Counter.tsx': $$0,
 		'./islands/Dashboard.tsx': $$1,
-		'./islands/StudentReport.tsx': $$2,
+		'./islands/PredictionPage.tsx': $$2,
+		'./islands/StudentReport.tsx': $$3,
 	},
 	baseUrl: import.meta.url,
 };
