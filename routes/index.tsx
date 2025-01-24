@@ -1,19 +1,13 @@
-import { Head } from '$fresh/runtime.ts';
-import Sidebar from '../components/SideBar.tsx';
-import Dashboard from '../islands/Dashboard.tsx';
+import { Handlers } from '$fresh/server.ts';
 
-export default function Home() {
-  return (
-    <>
-      <Head>
-        <title>School Enrollee Prediction</title>
-      </Head>
-      <div class='flex bg-gray-900 text-gray-200 min-h-screen'>
-        <Sidebar />
-        <div class='ml-64 p-4 w-full'>
-          <Dashboard />
-        </div>
-      </div>
-    </>
-  );
-}
+export const handler: Handlers = {
+  GET() {
+    const headers = new Headers();
+    headers.set('Set-Cookie', 'session=; HttpOnly; Path=/; Max-Age=0');
+    headers.set('Location', '/dashboard');
+    return new Response(null, {
+      status: 302,
+      headers, // Redirect to login after logout
+    });
+  },
+};

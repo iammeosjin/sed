@@ -1,0 +1,14 @@
+.button-primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.button-primary:hover {
+  background-color: #395feb; /* Darker shade on hover */
+}
