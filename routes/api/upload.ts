@@ -89,46 +89,46 @@ export const handler: Handlers = {
     );
 
     // Load or create the model
-    const loadHandler = new DenoFileLoadHandler('./prediction-models');
-    let model;
-    try {
-      model = await tf.loadLayersModel(loadHandler);
-      model.compile({
-        optimizer: 'adam',
-        loss: 'meanSquaredError',
-        metrics: ['mse'],
-      });
-      console.log('Loaded existing model');
-    } catch {
-      console.log('No existing model found, creating a new one');
-      model = tf.sequential();
-      model.add(
-        tf.layers.dense({ inputShape: [3], units: 16, activation: 'relu' }),
-      );
-      model.add(tf.layers.dense({ units: 8, activation: 'relu' }));
-      model.add(tf.layers.dense({ units: 1, activation: 'linear' }));
-      model.compile({
-        optimizer: 'adam',
-        loss: 'meanSquaredError',
-        metrics: ['mse'],
-      });
-    }
+    // const loadHandler = new DenoFileLoadHandler('./prediction-models');
+    // let model;
+    // try {
+    //   model = await tf.loadLayersModel(loadHandler);
+    //   model.compile({
+    //     optimizer: 'adam',
+    //     loss: 'meanSquaredError',
+    //     metrics: ['mse'],
+    //   });
+    //   console.log('Loaded existing model');
+    // } catch {
+    //   console.log('No existing model found, creating a new one');
+    //   model = tf.sequential();
+    //   model.add(
+    //     tf.layers.dense({ inputShape: [3], units: 16, activation: 'relu' }),
+    //   );
+    //   model.add(tf.layers.dense({ units: 8, activation: 'relu' }));
+    //   model.add(tf.layers.dense({ units: 1, activation: 'linear' }));
+    //   model.compile({
+    //     optimizer: 'adam',
+    //     loss: 'meanSquaredError',
+    //     metrics: ['mse'],
+    //   });
+    // }
 
-    // Train the model
-    const xs = tf.tensor2d(features, [features.length, 3]);
-    const ys = tf.tensor2d(labels.map((label) => label / maxYear), [
-      labels.length,
-      1,
-    ]);
+    // // Train the model
+    // const xs = tf.tensor2d(features, [features.length, 3]);
+    // const ys = tf.tensor2d(labels.map((label) => label / maxYear), [
+    //   labels.length,
+    //   1,
+    // ]);
 
-    await model.fit(xs, ys, {
-      epochs: 50,
-      batchSize: 64,
-    });
+    // await model.fit(xs, ys, {
+    //   epochs: 50,
+    //   batchSize: 64,
+    // });
 
-    // Save the model
-    const saveHandler = new DenoFileSaveHandler('./prediction-models');
-    await model.save(saveHandler);
+    // // Save the model
+    // const saveHandler = new DenoFileSaveHandler('./prediction-models');
+    // await model.save(saveHandler);
 
     console.log('Model updated and saved');
     return new Response(null, { status: 200 });
