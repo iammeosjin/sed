@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { useState } from 'preact/hooks';
 import groupBy from 'https://deno.land/x/ramda@v0.27.2/source/groupBy.js';
-import toPairs from 'https://deno.land/x/ramda@v0.27.2/source/toPairs.js';
 import sort from 'https://deno.land/x/ramda@v0.27.2/source/sort.js';
+import toPairs from 'https://deno.land/x/ramda@v0.27.2/source/toPairs.js';
 import { Student } from '../types.ts';
 import { parseLevel } from '../library/parse-level.ts';
 
