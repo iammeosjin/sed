@@ -13,12 +13,13 @@ import * as $7 from './routes/login.tsx';
 import * as $8 from './routes/logout.tsx';
 import * as $9 from './routes/prediction.tsx';
 import * as $10 from './routes/reports.tsx';
-import * as $$0 from './islands/Counter.tsx';
-import * as $$1 from './islands/Dashboard.tsx';
-import * as $$2 from './islands/LoginPage.tsx';
-import * as $$3 from './islands/PredictionPage.tsx';
-import * as $$4 from './islands/SideBar.tsx';
-import * as $$5 from './islands/StudentReport.tsx';
+import * as $$0 from './islands/Chart.tsx';
+import * as $$1 from './islands/Counter.tsx';
+import * as $$2 from './islands/Dashboard.tsx';
+import * as $$3 from './islands/LoginPage.tsx';
+import * as $$4 from './islands/PredictionPage.tsx';
+import * as $$5 from './islands/SideBar.tsx';
+import * as $$6 from './islands/StudentReport.tsx';
 
 const manifest = {
 	routes: {
@@ -35,12 +36,13 @@ const manifest = {
 		'./routes/reports.tsx': $10,
 	},
 	islands: {
-		'./islands/Counter.tsx': $$0,
-		'./islands/Dashboard.tsx': $$1,
-		'./islands/LoginPage.tsx': $$2,
-		'./islands/PredictionPage.tsx': $$3,
-		'./islands/SideBar.tsx': $$4,
-		'./islands/StudentReport.tsx': $$5,
+		'./islands/Chart.tsx': $$0,
+		'./islands/Counter.tsx': $$1,
+		'./islands/Dashboard.tsx': $$2,
+		'./islands/LoginPage.tsx': $$3,
+		'./islands/PredictionPage.tsx': $$4,
+		'./islands/SideBar.tsx': $$5,
+		'./islands/StudentReport.tsx': $$6,
 	},
 	baseUrl: import.meta.url,
 };
